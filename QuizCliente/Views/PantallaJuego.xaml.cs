@@ -1,4 +1,6 @@
-﻿using System;
+﻿using QuizCliente.Services;
+using QuizCliente.ViewModels;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -22,6 +24,12 @@ namespace QuizCliente.Views
         public PantallaJuego()
         {
             InitializeComponent();
+        }
+
+        public PantallaJuego(ClienteQuizServices clienteService)
+        {
+            InitializeComponent();
+            DataContext= new PantallaJuegoViewModel(clienteService);
         }
     }
 }
