@@ -1,4 +1,5 @@
-﻿using System;
+﻿using QuizCliente.ViewModels;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -21,7 +22,12 @@ namespace QuizCliente.Views
     {
         public JuegoPrincipal()
         {
+         
             InitializeComponent();
+            DataContext = new JuegoPrincipalViewModel(); // ⬅️ Esto enlaza la vista con el ViewModel
+       
         }
+
+        
     }
 }
