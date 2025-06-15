@@ -35,20 +35,31 @@
 
 
         <TextBlock Grid.Row="1"
-                   Text="¿Cuál es la capital de Francia?" 
-                   FontSize="24" 
-                   FontWeight="Bold" 
-                   Foreground="White"
-                   TextWrapping="Wrap" 
-                   TextAlignment="Center"
-                   Margin="0,20"/>
+         Text="{Binding Pregunta}" 
+         FontSize="24" 
+         FontWeight="Bold" 
+         Foreground="White"
+         TextWrapping="Wrap" 
+         TextAlignment="Center"
+         Margin="0,20" />
 
  
         <UniformGrid Grid.Row="2" Columns="2" Rows="2" Margin="0,20" HorizontalAlignment="Center" VerticalAlignment="Top">
-            <Button Content="París" Style="{StaticResource QuizOptionButtonStyle}"/>
-            <Button Content="Roma" Style="{StaticResource QuizOptionButtonStyle}"/>
-            <Button Content="Madrid" Style="{StaticResource QuizOptionButtonStyle}"/>
-            <Button Content="Berlín" Style="{StaticResource QuizOptionButtonStyle}"/>
+            <ItemsControl Grid.Row="2" ItemsSource="{Binding Opciones}">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <UniformGrid Columns="2" Rows="2" Margin="0,20" HorizontalAlignment="Center"/>
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Button Content="{Binding}" Style="{StaticResource QuizOptionButtonStyle}" />
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
         </UniformGrid>
+        
+
+        
     </Grid>
 </Window>

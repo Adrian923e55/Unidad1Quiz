@@ -24,7 +24,7 @@ namespace QuizCliente.Views
         {
          
             InitializeComponent();
-            DataContext = new JuegoPrincipalViewModel(); // ⬅️ Esto enlaza la vista con el ViewModel
+            DataContext = new JuegoPrincipalViewModel(); 
        
         }
 
