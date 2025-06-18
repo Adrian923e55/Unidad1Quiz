@@ -20,12 +20,12 @@
                 <Button Content="Iniciar Servidor" 
                         Width="150" Height="40" Margin="0,0,10,0"
                         Background="#27ae60" Foreground="White" FontWeight="Bold"
-                        Command="{Binding IniciarCommand}" />
+                        Command="{Binding IniciarServidorCommand}" />
 
                 <Button Content="Detener Servidor" 
                         Width="150" Height="40"
                         Background="#c0392b" Foreground="White" FontWeight="Bold"
-                        Command="{Binding DetenerCommand}" />
+                        Command="{Binding DetenerServidorCommand}" />
             </StackPanel>
 
             <TextBlock Text="Total de jugadores conectados:" FontSize="16" FontWeight="SemiBold" Foreground="white" Margin="0,20,0,0"/>
