@@ -22,44 +22,45 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
-            <RowDefinition Height="auto"/>
+            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-  
-        <TextBlock Text="00:15" 
+        <!-- Temporizador -->
+        <TextBlock Text="{Binding TiempoRestanteTexto}" 
                    FontSize="28" 
                    Foreground="White" 
                    HorizontalAlignment="Right" 
                    VerticalAlignment="Top" 
                    Margin="0,0,10,0"/>
 
-
+        <!-- Enunciado -->
         <TextBlock Grid.Row="1"
-         Text="{Binding Pregunta}" 
-         FontSize="24" 
-         FontWeight="Bold" 
-         Foreground="White"
-         TextWrapping="Wrap" 
-         TextAlignment="Center"
-         Margin="0,20" />
-
- 
-        <UniformGrid Grid.Row="2" Columns="2" Rows="2" Margin="0,20" HorizontalAlignment="Center" VerticalAlignment="Top">
-            <ItemsControl Grid.Row="2" ItemsSource="{Binding Opciones}">
-                <ItemsControl.ItemsPanel>
-                    <ItemsPanelTemplate>
-                        <UniformGrid Columns="2" Rows="2" Margin="0,20" HorizontalAlignment="Center"/>
-                    </ItemsPanelTemplate>
-                </ItemsControl.ItemsPanel>
-                <ItemsControl.ItemTemplate>
-                    <DataTemplate>
-                        <Button Content="{Binding}" Style="{StaticResource QuizOptionButtonStyle}" />
-                    </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
-        </UniformGrid>
-        
+                   Text="{Binding Enunciado}" 
+                   FontSize="24" 
+                   FontWeight="Bold" 
+                   Foreground="White"
+                   TextWrapping="Wrap" 
+                   TextAlignment="Center"
+                   Margin="0,20" />
 
         
+        <ItemsControl Grid.Row="2" ItemsSource="{Binding Opciones}" AlternationCount="4">
+            <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <UniformGrid Columns="2" Rows="2" Margin="0,20" HorizontalAlignment="Center"/>
+                </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+
+            <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                    <Button Content="{Binding}" 
+                    Style="{StaticResource QuizOptionButtonStyle}"
+                    IsEnabled="{Binding DataContext.RespuestasHabilitadas, RelativeSource={RelativeSource AncestorType=Window}}"
+                    Command="{Binding DataContext.SeleccionarOpcionCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                    CommandParameter="{Binding (ItemsControl.AlternationIndex), RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=ContentPresenter}}"/>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
+
     </Grid>
 </Window>

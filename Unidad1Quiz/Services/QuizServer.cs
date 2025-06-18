@@ -7,15 +7,23 @@ using System.Text;
 using System.Text.Json;
 using System.Threading;
 using Unidad1Quiz.Models;
+
 public class QuizServer
 {
-    UdpClient servidor;
-    Dictionary<IPEndPoint, string> clientes = new();
-    Dictionary<IPEndPoint, int> respuestas = new();
-    HashSet<string> nombresUsados = new();
-    bool aceptandoRespuestas = false;
+    private UdpClient servidor;
+    private Dictionary<IPEndPoint, string> clientes = new();
+    private Dictionary<IPEndPoint, int> respuestas = new();
+    private HashSet<string> nombresUsados = new();
+    private bool aceptandoRespuestas = false;
+    private bool ejecutando = true;
+    private Thread? hiloRecepcion;
+    private Pregunta? preguntaActual;
 
-    Pregunta? preguntaActual;
+    // Eventos públicos para comunicación con el ViewModel
+    public event Action<string>? NuevaPreguntaRecibida;
+    public event Action<List<string>>? AciertosActualizados;
+    public event Action<int>? JugadoresConectadosActualizados;
+    public event Action<string>? ClienteRegistrado;
 
     public QuizServer()
     {
@@ -24,23 +32,24 @@ public class QuizServer
 
         Console.WriteLine("Servidor iniciado en puerto 65000");
 
-        Thread hilo = new Thread(EscucharMensajes);
-        hilo.IsBackground = true;
-        hilo.Start();
+        hiloRecepcion = new Thread(EscucharMensajes)
+        {
+            IsBackground = true
+        };
+        hiloRecepcion.Start();
     }
 
     void EscucharMensajes()
     {
-        while (true)
+        while (ejecutando)
         {
-            IPEndPoint cliente = new IPEndPoint(IPAddress.Any, 0);
-            byte[] buffer = servidor.Receive(ref cliente);
-            string json = Encoding.UTF8.GetString(buffer);
-
             try
             {
-                var mensaje = JsonSerializer.Deserialize<MensajeCliente>(json);
+                IPEndPoint cliente = new IPEndPoint(IPAddress.Any, 0);
+                byte[] buffer = servidor.Receive(ref cliente);
+                string json = Encoding.UTF8.GetString(buffer);
 
+                var mensaje = JsonSerializer.Deserialize<MensajeCliente>(json);
                 if (mensaje == null) continue;
 
                 if (mensaje.Tipo == "registro")
@@ -52,15 +61,26 @@ public class QuizServer
                     ProcesarRespuesta(cliente, mensaje.OpcionSeleccionada);
                 }
             }
+            catch (SocketException)
+            {
+                if (!ejecutando) break;
+            }
             catch
             {
                 Console.WriteLine("Mensaje inválido recibido.");
             }
         }
+
+        Console.WriteLine("Hilo de recepción finalizado.");
     }
 
     void RegistrarCliente(IPEndPoint ep, string nombre)
     {
+        if (string.IsNullOrWhiteSpace(nombre))
+        {
+            EnviarMensaje(ep, new { tipo = "error", mensaje = "Debe enviar un nombre válido para registrarse." });
+            return;
+        }
         string nombreFinal = nombre;
         int contador = 1;
 
@@ -75,6 +95,10 @@ public class QuizServer
         Console.WriteLine($"Cliente registrado: {nombreFinal} ({ep})");
 
         EnviarMensaje(ep, new { tipo = "registro_confirmado", nombre = nombreFinal });
+
+        // Notificar al ViewModel
+        ClienteRegistrado?.Invoke(nombreFinal);
+        JugadoresConectadosActualizados?.Invoke(clientes.Count);
     }
 
     void ProcesarRespuesta(IPEndPoint ep, int opcion)
@@ -106,13 +130,16 @@ public class QuizServer
         Broadcast(mensaje);
         Console.WriteLine($"Pregunta enviada: {pregunta.Enunciado}");
 
-        // Deshabilitar respuestas por 3 segundos
+       
+        NuevaPreguntaRecibida?.Invoke(pregunta.Enunciado);
+
+        // Esperar 3 segundos antes de aceptar respuestas
         Thread.Sleep(3000);
         aceptandoRespuestas = true;
         Console.WriteLine("Respuestas habilitadas por 10 segundos.");
         Broadcast(new { tipo = "habilitarRespuesta" });
 
-        // Temporizador
+        // Esperar 10 segundos para las respuestas
         Thread.Sleep(10000);
         aceptandoRespuestas = false;
 
@@ -154,6 +181,9 @@ public class QuizServer
             aciertos
         };
 
+        // Notificar al ViewModel
+        AciertosActualizados?.Invoke(aciertos);
+
         Broadcast(resumen);
     }
 
@@ -172,6 +202,17 @@ public class QuizServer
         byte[] buffer = JsonSerializer.SerializeToUtf8Bytes(mensaje);
         servidor.Send(buffer, buffer.Length, ep);
     }
+
+    public void Detener()
+    {
+        ejecutando = false;
+        try
+        {
+            servidor.Close();
+        }
+        catch { }
+
+        hiloRecepcion?.Join();
+        Console.WriteLine("Servidor detenido.");
+    }
 }
-
-

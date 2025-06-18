@@ -2,55 +2,145 @@
 using QuizCliente.Services;
 using System;
 using System.Collections.Generic;
-using System.Collections.Specialized;
 using System.ComponentModel;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Threading;
 using System.Windows;
 using System.Windows.Input;
 using Unidad1Quiz.Models;
 
 namespace QuizCliente.ViewModels
 {
-    public class PantallaJuegoViewModel:INotifyPropertyChanged
+    public class PantallaJuegoViewModel : INotifyPropertyChanged
     {
         private ClienteQuizServices clienteService;
-        public string Enunciado { get; set; } = "";
-        public List<string> Opciones { get; set; } = new();
+        private Timer? temporizador;
+
+        // Variable interna y propiedad para el temporizador
+        private int tiempoRestante;
+        public int TiempoRestante
+        {
+            get => tiempoRestante;
+            set
+            {
+                tiempoRestante = value;
+                OnPropertyChanged(nameof(TiempoRestante));
+                OnPropertyChanged(nameof(TiempoRestanteTexto));
+            }
+        }
+
+        // Propiedad que formatea el tiempo en formato "00:15"
+        public string TiempoRestanteTexto => $"00:{TiempoRestante:00}";
+
+        // Propiedad que determina si se pueden enviar respuestas
+        private bool respuestasHabilitadas;
+        public bool RespuestasHabilitadas
+        {
+            get => respuestasHabilitadas;
+            set
+            {
+                respuestasHabilitadas = value;
+                OnPropertyChanged(nameof(RespuestasHabilitadas));
+            }
+        }
+
+        // Propiedad para el enunciado de la pregunta
+        private string enunciado = "";
+        public string Enunciado
+        {
+            get => enunciado;
+            set
+            {
+                enunciado = value;
+                OnPropertyChanged(nameof(Enunciado));
+            }
+        }
+
+        // Propiedad para la lista de opciones
+        private List<string> opciones = new();
+        public List<string> Opciones
+        {
+            get => opciones;
+            set
+            {
+                opciones = value;
+                OnPropertyChanged(nameof(Opciones));
+            }
+        }
+
+        
         public ICommand SeleccionarOpcionCommand { get; }
 
         public PantallaJuegoViewModel(ClienteQuizServices service)
         {
-            clienteService = service;
+            clienteService = service ?? throw new ArgumentNullException(nameof(service));
+
+           
             clienteService.PreguntaRecibida += OnPreguntaRecibida;
             clienteService.HabilitarRespuesta += OnHabilitarRespuesta;
-            clienteService.MensajeSistema += msg => MessageBox.Show(msg);
+            clienteService.MensajeSistema += msg =>
+            {
+                Application.Current.Dispatcher.Invoke(() =>
+                {
+                    MessageBox.Show(msg);
+                });
+            };
 
             SeleccionarOpcionCommand = new RelayCommand<int>(SeleccionarOpcion);
         }
 
+        
         private void OnPreguntaRecibida(Pregunta pregunta)
         {
-            Enunciado = pregunta.Enunciado;
-            Opciones = pregunta.Opciones;
-            OnPropertyChanged(nameof(Enunciado));
-            OnPropertyChanged(nameof(Opciones));
+            Application.Current.Dispatcher.Invoke(() =>
+            {
+                Enunciado = pregunta.Enunciado;
+                Opciones = new List<string>(pregunta.Opciones);
+                
+                RespuestasHabilitadas = false;
+                
+                TiempoRestante = 15;
+                
+                temporizador?.Dispose();
+            });
         }
 
+        
         private void OnHabilitarRespuesta()
         {
-            // Permitir botones
+            Application.Current.Dispatcher.Invoke(() =>
+            {
+                RespuestasHabilitadas = true;
+                
+                TiempoRestante = 15;
+                temporizador?.Dispose();
+               
+                temporizador = new Timer(_ =>
+                {
+                    Application.Current.Dispatcher.Invoke(() =>
+                    {
+                        TiempoRestante--;
+                        if (TiempoRestante <= 0)
+                        {
+                            RespuestasHabilitadas = false;
+                            temporizador?.Dispose();
+                        }
+                    });
+                }, null, 0, 1000);
+            });
         }
 
+        
         private void SeleccionarOpcion(int index)
         {
+            if (!RespuestasHabilitadas) return;
             clienteService.EnviarRespuesta(index);
+            
+            RespuestasHabilitadas = false;
         }
 
+      
         public event PropertyChangedEventHandler? PropertyChanged;
-        protected void OnPropertyChanged(string name) =>
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
-
+        protected void OnPropertyChanged(string propertyName) =>
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
     }
 }

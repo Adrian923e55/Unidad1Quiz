@@ -42,7 +42,7 @@
             Background="#FF4CAF50" 
             Foreground="White"
             BorderBrush="Transparent"
-            Command="{Binding StartCommand}" Click="Button_Click"/>
+            Command="{Binding StartCommand}"/>
         </StackPanel>
 
     </Grid>

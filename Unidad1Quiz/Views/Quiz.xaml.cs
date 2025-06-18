@@ -22,6 +22,7 @@ namespace Unidad1Quiz.Views
         public Quiz()
         {
             InitializeComponent();
+            DataContext=new ViewModels.QuizViewModel();
         }
     }
 }

@@ -11,12 +11,26 @@ using System.Windows;
 using GalaSoft.MvvmLight.Command;
 using QuizCliente.Services;
 using System.Runtime.CompilerServices;
+using System.Windows.Threading;
 
 namespace QuizCliente.ViewModels
 {
     public class JuegoPrincipalViewModel :INotifyPropertyChanged
     {
+        private DispatcherTimer? _timer;
+        private int _tiempoRestante;
+        public int TiempoRestante
+        {
+            get => _tiempoRestante;
+            set
+            {
+                _tiempoRestante = value;
+                OnPropertyChanged(nameof(TiempoRestante));
+                OnPropertyChanged(nameof(TiempoRestanteTexto));
+            }
+        }
         public string PlayerName { get; set; } = "";
+        public string TiempoRestanteTexto => $"00:{TiempoRestante:00}";
         public ICommand StartCommand { get; }
 
         private ClienteQuizServices clienteService;
@@ -41,6 +55,9 @@ namespace QuizCliente.ViewModels
         }
 
         public event PropertyChangedEventHandler? PropertyChanged;
-        
+        protected void OnPropertyChanged([CallerMemberName] string propertyName = "")
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
     }
 }
